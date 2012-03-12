@@ -26,11 +26,14 @@
 
 <cffunction name="SessionInvalidate" output="false" returntype="void">
 	<cfscript>
+		var lc = StructNew();
 		lc.sessionId = session.cfid & '_' & session.cftoken;
 
 		// Fire onSessionEnd
 		lc.appEvents = application.getEventInvoker();
-		lc.args = [application, session];
+		lc.args = ArrayNew(1);
+		lc.args[1] = application;
+		lc.args[2] = session;
 		lc.appEvents.onSessionEnd(lc.args);
 
 		// Make sure that session is empty
@@ -39,25 +42,18 @@
 		// Clean up the session
 		lc.sessionTracker = CreateObject("java", "coldfusion.runtime.SessionTracker");
 		lc.sessionTracker.cleanUp(application.applicationName, lc.sessionId);
-
-
 	</cfscript>
 </cffunction>
 
-<!---
-Done
-	ArraySlice			http://help.adobe.com/en_US/ColdFusion/10.0/CFMLRef/WSf23b27ebc7b554b647112c9713585f0e10e-8000.html
-
-Skipped
-	* The following can't be backported as we can't force arrays to be passed by reference
-	ArrayEach			http://help.adobe.com/en_US/ColdFusion/10.0/CFMLRef/WSf23b27ebc7b554b6-179bf6ef13585ac1b4d-8000.html
-	ArrayFilter			http://help.adobe.com/en_US/ColdFusion/10.0/CFMLRef/WSf23b27ebc7b554b6-179bf6ef13585ac1b4d-7fff.html
-
-
-To do
-	ArrayFindAll		http://help.adobe.com/en_US/ColdFusion/10.0/CFMLRef/WSf23b27ebc7b554b6-5b4bf12a13585ace297-8000.html
-	ArrayFindNoCase		http://help.adobe.com/en_US/ColdFusion/10.0/CFMLRef/WS98CF660A-0C9E-4e85-BBA1-89862B60EB4D.html
-	SessionInvalidate	http://help.adobe.com/en_US/ColdFusion/10.0/CFMLRef/WS932f2e4c7c04df8f-23f56e61353e3d07d1-8000.html
-	SessionRotate		http://help.adobe.com/en_US/ColdFusion/10.0/CFMLRef/WS932f2e4c7c04df8f-23f56e61353e3d07d1-7fff.html
-	SessionStartTime	http://help.adobe.com/en_US/ColdFusion/10.0/CFMLRef/WSf23b27ebc7b554b6-67fd180f13585b7069d-8000.html
---->
+<cffunction name="SessionStartTime" output-="false" returntype="date">
+	<cfscript>
+		var lc = StructNew();
+		lc.mirror = ArrayNew(1);
+		lc.class = lc.mirror.getClass().forName("coldfusion.runtime.SessionScope");
+		// See blog post for how "mStartTime" was found.
+		lc.start = lc.class.getDeclaredField("mStartTime");
+		lc.start.setAccessible(true);
+		// Credit to Styggiti http://rob.brooks-bilson.com/index.cfm/2007/10/11/Some-Notes-on-Using-Epoch-Time-in-ColdFusion
+		return DateAdd("s", lc.start.get(session) / 1000, DateConvert("utc2Local", "January 1 1970 00:00:00"));
+	</cfscript>
+</cffunction>
