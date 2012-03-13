@@ -57,3 +57,112 @@
 		return DateAdd("s", lc.start.get(session) / 1000, DateConvert("utc2Local", "January 1 1970 00:00:00"));
 	</cfscript>
 </cffunction>
+
+<cffunction name="CallStackGet" output="false" returntype="array">
+	<cfscript>
+		var lc = StructNew();
+		lc.thread = CreateObject("java", "java.lang.Thread").currentThread();
+		lc.dump = lc.thread.getStackTrace();
+		lc.op = ArrayNew(1);
+		lc.elCount = ArrayLen(lc.dump);
+		for (lc.i = 1; lc.i lte lc.elCount; lc.i = lc.i + 1) {
+			lc.fName = lc.dump[lc.i].getFileName();
+			if (StructKeyExists(lc, 'fName') And ReFindNoCase("\.cf(c|m)$", lc.fName)) {
+				lc.info = StructNew();
+				lc.info["Template"] = lc.fName;
+				lc.cName = lc.dump[lc.i].getClassName();
+				if (ReFindNoCase("\$func", lc.cName)) {
+					lc.info["Function"] = ReReplace(lc.cName, "^.+\$func", "");
+				} else {
+					lc.info["Function"] = "";
+				}
+				lc.info["LineNumber"] = lc.dump[lc.i].getLineNumber();
+				ArrayAppend(lc.op, Duplicate(lc.info));
+			}
+		}
+		ArrayDeleteAt(lc.op, 1);
+		return lc.op;
+	</cfscript>
+</cffunction>
+
+<cffunction name="CallStackDump" output="false" returntype="void">
+	<cfargument name="destination" required="false" type="string" default="browser" />
+	<cfscript>
+		var lc = StructNew();
+		lc.dump = CallStackGet();
+		//return lc.dump;
+		lc.op = ArrayNew(1);
+		lc.elCount = ArrayLen(lc.dump);
+		// Skip 1 (CallStackDump)
+		for (lc.i = 2; lc.i lte lc.elCount; lc.i = lc.i + 1) {
+			if (Len(lc.dump[lc.i]["Function"]) Gt 0) {
+				ArrayAppend(lc.op, lc.dump[lc.i].Template & ":" & lc.dump[lc.i]["Function"] & ":" & lc.dump[lc.i].LineNumber);
+			} else {
+				ArrayAppend(lc.op, lc.dump[lc.i].Template & ":" & lc.dump[lc.i].LineNumber);
+			}
+		}
+		lc.op = ArrayToList(lc.op, Chr(10));
+
+		if (arguments.destination Eq "browser") {
+			// Use the buffer since output = false
+			GetPageContext().getCFOutput().print(lc.op);
+		} else if (arguments.destination Eq "console") {
+			CreateObject("java", "java.lang.System").out.println(lc.op);
+		} else {
+			if (FileExists(arguments.destination)) {
+				// TODO: CF8+ code, what about CF7?
+				FileWrite(arguments.desintation, lc.op & Chr(10));
+			}
+		}
+	</cfscript>
+</cffunction>
+
+<!---
+D ArraySlice
+ArrayEach
+ArrayFilter
+ArrayFindAll
+ArrayFindNoCase
+CacheIDExists
+CacheRegionNew
+CacheRegionRemove
+CacheRegionAll
+CacheRegionExists
+Canonicalize
+CallStackDump
+CSRFGenerateToken
+CSRFVerifyToken
+EncodeForHtml
+EncodeForCSS
+EncodeForHtmlAttribute
+EncodeForJavaScript
+EncodeForUrl
+FileGetMimeType
+GetCpuUsage
+GetFreeSpace
+GetTotalSpace
+GetSystemFreeMemory
+GetSystemTotalMemory
+HMac
+ImageCreateCaptcha
+ImageMakeColorTranspent
+ImageMakeTranslucent
+Invoke
+IsClosure
+ListFilter
+OnWsAuthenticate
+OrmIndex
+OrmIndexPurge
+OrmSearch
+OrmSearchOffline
+RestInitApplication
+RemoveCacahedQuery
+RestDeleteApplication
+RestSetResponse
+D SessionInvalidate
+SessionRotate
+D SessionStartTime
+StructEach
+StructFilter
+WSSendMessage
+--->
