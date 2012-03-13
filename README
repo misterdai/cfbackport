@@ -1,10 +1,10 @@
-                        __ _____ ____   ____    __ __  _ ____   ___  ____  ______
-                       /  ]     |    \ /    |  /  ]  |/ ]    \ /   \|    \|      |
-                      /  /|   __|  o  )  o  | /  /|  ' /|  o  )     |  D  )      |
-                     /  / |  |_ |     |     |/  / |    \|   _/|  O  |    /|_|  |_|
-                    /   \_|   _]|  O  |  _  /   \_|     \  |  |     |    \  |  |
-                    \     |  |  |     |  |  \     |  .  |  |  |     |  .  \ |  |
-                     \____|__|  |_____|__|__|\____|__|\_|__|   \___/|__|\_| |__|
+            __ _____ ____   ____    __ __  _ ____   ___  ____  ______
+           /  ]     |    \ /    |  /  ]  |/ ]    \ /   \|    \|      |
+          /  /|   __|  o  )  o  | /  /|  ' /|  o  )     |  D  )      |
+         /  / |  |_ |     |     |/  / |    \|   _/|  O  |    /|_|  |_|
+        /   \_|   _]|  O  |  _  /   \_|     \  |  |     |    \  |  |
+        \     |  |  |     |  |  \     |  .  |  |  |     |  .  \ |  |
+         \____|__|  |_____|__|__|\____|__|\_|__|   \___/|__|\_| |__|
 
 Author: David "Mister Dai" Boyer
 Website: http://misterdai.wordpress.com
@@ -14,26 +14,28 @@ Version: 0.5
 | Description        |
 ----------------------
 
-This project aims to make at least some functions from newer versions of Adobe ColdFusion avilable
-in older versions.  For example, SessionInvalidate() is new to CF10 but undocumented features make
-it possible in at least CF8+, possibly even CF7.
+This project aims to make at least some functions from newer versions of Adobe
+ColdFusion avilable in older versions.  For example, SessionInvalidate() is new
+to CF10 but undocumented features make it possible in at least CF8+, possibly
+even CF7.
 
-Each set of functions is wrapped within an "if" statement to make sure they aren't loaded if the
-version already supports them.
+Each set of functions is wrapped within an "if" statement to make sure they
+aren't loaded if the version already supports them.
 
 ----------------------
 | Requirements       |
 ----------------------
 
-Functions should work in at least ColdFusion 8+.  Where possible I've tried to avoid using newer
-syntax or functions
+Functions should work in at least ColdFusion 8+.  Where possible I've tried to
+avoid using newer syntax or functions
 
 ----------------------
 | Usage              |
 ----------------------
 
-Include the file cfbackport.cfm where you'd like the functions to appear.  Keep in mind that if you
-are operating within a CFC, you'll need to include them there to make use of them.
+Include the file cfbackport.cfm where you'd like the functions to appear.  Keep
+in mind that if you are operating within a CFC, you'll need to include them
+there to make use of them.
 
 <cfinclude template="cfbackport.cfm" />
 
