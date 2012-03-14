@@ -1,168 +1,177 @@
 <cffunction name="GetApplicationMetadata" output="false" returntype="struct">
-	<cfset var lc = StructNew() />
-	<cfif IsDefined("application")>
-		<cfreturn application.getApplicationSettings() />
-	</cfif>
-	<cfreturn StructNew() />
+  <cfscript>
+    if (IsDefined("application")) {
+      return application.getApplicationSettings();
+    }
+    return StructNew();
+  </cfscript>
 </cffunction>
 
 <cffunction name="ArraySlice" output="false" returntype="array" description="Returns part of an array, as specified">
-	<cfargument name="array" type="array" required="true" />
-	<cfargument name="offset" type="numeric" required="true" />
-	<cfargument name="length" type="numeric" required="false" />
-	<cfset var lc = StructNew() />
-	<cfif Not StructKeyExists(arguments, "length")>
-		<cfset lc.from = arguments.offset - 1 />
-		<cfset arguments.length = ArrayLen(arguments.array) - lc.from />
-	<cfelseif arguments.offset Lt 0>
-		<cfset lc.from = ArrayLen(arguments.array) + arguments.offset />
-	<cfelse>
-		<cfset lc.from = arguments.offset - 1 />
-	</cfif>
-	<cfset lc.to = lc.from + arguments.length />
-	<!--- subList(from [inclusive], to [exclusive]), start index is 0 --->
-	<cfreturn arguments.array.subList(lc.from, lc.to) />
+  <cfargument name="array" type="array" required="true" />
+  <cfargument name="offset" type="numeric" required="true" />
+  <cfargument name="length" type="numeric" required="false" />
+  <cfscript>
+  	var lc = StructNew();
+  	if (Not StructKeyExists(arguments, "length")) {
+      lc.from = arguments.offset - 1;
+      arguments.length = ArrayLen(arguments.array) - lc.from;
+    } else if (arguments.offset Lt 0) {
+      lc.from = ArrayLen(arguments.array) + arguments.offset;
+    } else {
+      lc.from = arguments.offset - 1;
+    }
+    lc.to = lc.from + arguments.length;
+    // subList(from [inclusive], to [exclusive]), start index is 0
+    return arguments.array.subList(lc.from, lc.to);
+  </cfscript>
 </cffunction>
 
 <cffunction name="SessionInvalidate" output="false" returntype="void">
-	<cfscript>
-		var lc = StructNew();
-		lc.sessionId = session.cfid & '_' & session.cftoken;
+  <cfscript>
+    var lc = StructNew();
+    lc.sessionId = session.cfid & '_' & session.cftoken;
 
-		// Fire onSessionEnd
-		lc.appEvents = application.getEventInvoker();
-		lc.args = ArrayNew(1);
-		lc.args[1] = application;
-		lc.args[2] = session;
-		lc.appEvents.onSessionEnd(lc.args);
+    // Fire onSessionEnd
+    lc.appEvents = application.getEventInvoker();
+    lc.args = ArrayNew(1);
+    lc.args[1] = application;
+    lc.args[2] = session;
+    lc.appEvents.onSessionEnd(lc.args);
 
-		// Make sure that session is empty
-		StructClear(session);
+    // Make sure that session is empty
+    StructClear(session);
 
-		// Clean up the session
-		lc.sessionTracker = CreateObject("java", "coldfusion.runtime.SessionTracker");
-		lc.sessionTracker.cleanUp(application.applicationName, lc.sessionId);
-	</cfscript>
+    // Clean up the session
+    lc.sessionTracker = CreateObject("java", "coldfusion.runtime.SessionTracker");
+    lc.sessionTracker.cleanUp(application.applicationName, lc.sessionId);
+  </cfscript>
 </cffunction>
 
 <cffunction name="SessionStartTime" output-="false" returntype="date">
-	<cfscript>
-		var lc = StructNew();
-		lc.mirror = ArrayNew(1);
-		lc.class = lc.mirror.getClass().forName("coldfusion.runtime.SessionScope");
-		// See blog post for how "mStartTime" was found.
-		lc.start = lc.class.getDeclaredField("mStartTime");
-		lc.start.setAccessible(true);
-		// Credit to Styggiti http://rob.brooks-bilson.com/index.cfm/2007/10/11/Some-Notes-on-Using-Epoch-Time-in-ColdFusion
-		return DateAdd("s", lc.start.get(session) / 1000, DateConvert("utc2Local", "January 1 1970 00:00:00"));
-	</cfscript>
+  <cfscript>
+    var lc = StructNew();
+    lc.mirror = ArrayNew(1);
+    lc.class = lc.mirror.getClass().forName("coldfusion.runtime.SessionScope");
+    // See blog post for how "mStartTime" was found.
+    lc.start = lc.class.getDeclaredField("mStartTime");
+    lc.start.setAccessible(true);
+    // Credit to Styggiti http://rob.brooks-bilson.com/index.cfm/2007/10/11/Some-Notes-on-Using-Epoch-Time-in-ColdFusion
+    return DateAdd("s", lc.start.get(session) / 1000, DateConvert("utc2Local", "January 1 1970 00:00:00"));
+  </cfscript>
 </cffunction>
 
 <cffunction name="CallStackGet" output="false" returntype="array">
-	<cfscript>
-		var lc = StructNew();
-		lc.thread = CreateObject("java", "java.lang.Thread").currentThread();
-		lc.dump = lc.thread.getStackTrace();
-		lc.op = ArrayNew(1);
-		lc.elCount = ArrayLen(lc.dump);
-		for (lc.i = 1; lc.i lte lc.elCount; lc.i = lc.i + 1) {
-			lc.fName = lc.dump[lc.i].getFileName();
-			if (StructKeyExists(lc, 'fName') And ReFindNoCase("\.cf(c|m)$", lc.fName)) {
-				lc.info = StructNew();
-				lc.info["Template"] = lc.fName;
-				lc.cName = lc.dump[lc.i].getClassName();
-				if (ReFindNoCase("\$func", lc.cName)) {
-					lc.info["Function"] = ReReplace(lc.cName, "^.+\$func", "");
-				} else {
-					lc.info["Function"] = "";
-				}
-				lc.info["LineNumber"] = lc.dump[lc.i].getLineNumber();
-				ArrayAppend(lc.op, Duplicate(lc.info));
-			}
-		}
-		ArrayDeleteAt(lc.op, 1);
-		return lc.op;
-	</cfscript>
+  <cfscript>
+    var lc = StructNew();
+    lc.thread = CreateObject("java", "java.lang.Thread").currentThread();
+    lc.dump = lc.thread.getStackTrace();
+    lc.op = ArrayNew(1);
+    lc.elCount = ArrayLen(lc.dump);
+    for (lc.i = 1; lc.i lte lc.elCount; lc.i = lc.i + 1) {
+      lc.fName = lc.dump[lc.i].getFileName();
+      if (StructKeyExists(lc, 'fName') And ReFindNoCase("\.cf(c|m)$", lc.fName)) {
+        lc.info = StructNew();
+        lc.info["Template"] = lc.fName;
+        lc.cName = lc.dump[lc.i].getClassName();
+        if (ReFindNoCase("\$func", lc.cName)) {
+          lc.info["Function"] = ReReplace(lc.cName, "^.+\$func", "");
+        } else {
+          lc.info["Function"] = "";
+        }
+        lc.info["LineNumber"] = lc.dump[lc.i].getLineNumber();
+        ArrayAppend(lc.op, Duplicate(lc.info));
+      }
+    }
+    ArrayDeleteAt(lc.op, 1);
+    return lc.op;
+  </cfscript>
 </cffunction>
 
 <cffunction name="CallStackDump" output="false" returntype="void">
-	<cfargument name="destination" required="false" type="string" default="browser" />
-	<cfscript>
-		var lc = StructNew();
-		lc.dump = CallStackGet();
-		//return lc.dump;
-		lc.op = ArrayNew(1);
-		lc.elCount = ArrayLen(lc.dump);
-		// Skip 1 (CallStackDump)
-		for (lc.i = 2; lc.i lte lc.elCount; lc.i = lc.i + 1) {
-			if (Len(lc.dump[lc.i]["Function"]) Gt 0) {
-				ArrayAppend(lc.op, lc.dump[lc.i].Template & ":" & lc.dump[lc.i]["Function"] & ":" & lc.dump[lc.i].LineNumber);
-			} else {
-				ArrayAppend(lc.op, lc.dump[lc.i].Template & ":" & lc.dump[lc.i].LineNumber);
-			}
-		}
-		lc.op = ArrayToList(lc.op, Chr(10));
+  <cfargument name="destination" required="false" type="string" default="browser" />
+  <cfscript>
+    var lc = StructNew();
+    lc.dump = CallStackGet();
+    lc.op = ArrayNew(1);
+    lc.elCount = ArrayLen(lc.dump);
+    // Skip 1 (CallStackDump)
+    for (lc.i = 2; lc.i lte lc.elCount; lc.i = lc.i + 1) {
+      if (Len(lc.dump[lc.i]["Function"]) Gt 0) {
+        ArrayAppend(lc.op, lc.dump[lc.i].Template & ":" & lc.dump[lc.i]["Function"] & ":" & lc.dump[lc.i].LineNumber);
+      } else {
+        ArrayAppend(lc.op, lc.dump[lc.i].Template & ":" & lc.dump[lc.i].LineNumber);
+      }
+    }
+    lc.op = ArrayToList(lc.op, Chr(10));
 
-		if (arguments.destination Eq "browser") {
-			// Use the buffer since output = false
-			GetPageContext().getCFOutput().print(lc.op);
-		} else if (arguments.destination Eq "console") {
-			CreateObject("java", "java.lang.System").out.println(lc.op);
-		} else {
-			if (FileExists(arguments.destination)) {
-				// TODO: CF8+ code, what about CF7?
-				FileWrite(arguments.desintation, lc.op & Chr(10));
-			}
-		}
-	</cfscript>
+    if (arguments.destination Eq "browser") {
+      // Use the buffer since output = false
+      GetPageContext().getCFOutput().print(lc.op);
+    } else if (arguments.destination Eq "console") {
+      CreateObject("java", "java.lang.System").out.println(lc.op);
+    } else {
+      if (FileExists(arguments.destination)) {
+        // TODO: CF8+ code, what about CF7?
+        FileWrite(arguments.desintation, lc.op & Chr(10));
+      }
+    }
+  </cfscript>
 </cffunction>
 
-<!---
-D ArraySlice
-ArrayEach
-ArrayFilter
-ArrayFindAll
-ArrayFindNoCase
-CacheIDExists
-CacheRegionNew
-CacheRegionRemove
-CacheRegionAll
-CacheRegionExists
-Canonicalize
-CallStackDump
-CSRFGenerateToken
-CSRFVerifyToken
-EncodeForHtml
-EncodeForCSS
-EncodeForHtmlAttribute
-EncodeForJavaScript
-EncodeForUrl
-FileGetMimeType
-GetCpuUsage
-GetFreeSpace
-GetTotalSpace
-GetSystemFreeMemory
-GetSystemTotalMemory
-HMac
-ImageCreateCaptcha
-ImageMakeColorTranspent
-ImageMakeTranslucent
-Invoke
-IsClosure
-ListFilter
-OnWsAuthenticate
-OrmIndex
-OrmIndexPurge
-OrmSearch
-OrmSearchOffline
-RestInitApplication
-RemoveCacahedQuery
-RestDeleteApplication
-RestSetResponse
-D SessionInvalidate
-SessionRotate
-D SessionStartTime
-StructEach
-StructFilter
-WSSendMessage
---->
+<cffunction name="CsrfGenerateToken" output="false" returntype="string">
+  <cfargument name="key" type="string" required="false" default="" />
+  <cfargument name="random" type="string" required="false" default="false" />
+  <cfscript>
+    var lc = StructNew();
+    // TODO: Session locking?
+    if (Not StructKeyExists(session, '_cfbackportcsrf')) {
+      session['_cfbackportcsrf'] = StructNew();
+    }
+    if (arguments.random Or Not StructKeyExists(session._cfbackportcsrf, arguments.key)) {
+      if (ListFirst(server.coldfusion.productVersion) Gte 9) {
+        lc.token = "";
+        for (lc.i = 1; lc.i Lte 2; lc.i = lc.i + 1) {
+          lc.hex = FormatBaseN(RandRange(0, 65535, "SHA1PRNG"), 16);
+          lc.token = lc.token & RepeatString("0", 4 - Len(lc.hex)) & lc.hex;
+        }
+        lc.token = lc.token & Replace(CreateUUID(), "-", "", "all");
+      } else {
+        lc.token = "";
+        for (lc.i = 1; lc.i Lte 10; lc.i = lc.i + 1) {
+          lc.hex = FormatBaseN(RandRange(0, 65535, "SHA1PRNG"), 16);
+          lc.token = lc.token & RepeatString("0", 4 - Len(lc.hex)) & lc.hex;
+        }
+      }
+      lc.token = UCase(lc.token);
+      session._cfbackportcsrf[arguments.key] = lc.token;
+    } else {
+      return session._cfbackportcsrf[arguments.key];
+    }
+    return lc.token;
+  </cfscript>
+</cffunction>
+
+<cffunction name="CsrfVerifyToken" output="false" returntype="boolean">
+  <cfargument name="token" type="string" required="true" />
+  <cfargument name="key" type="string" required="false" default="" />
+  <cfscript>
+    // TODO: Session locking?
+    if (StructKeyExists(session, '_cfbackportcsrf')
+      And StructKeyExists(session._cfbackportcsrf, arguments.key)
+      And session._cfbackportcsrf[arguments.key] Eq arguments.token) {
+      return true;
+    }
+    return false;
+  </cfscript>
+</cffunction>
+
+<cffunction name="isClosure" output="false" returntype="boolean">
+	<!--- Couldn't resist --->
+	<cfreturn false />
+</cffunction>
+
+<cffunction name="ReEscape" output="false" returntype="string">
+	<cfargument name="string" type="string" required="true" />
+	<cfreturn ReReplace(arguments.string, "([\[\]\(\)\^\$\.\+\?\*\-\|])", "\$1", "all") />
+</cffunction>
