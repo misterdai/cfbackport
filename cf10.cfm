@@ -7,6 +7,14 @@
   </cfscript>
 </cffunction>
 
+<!--- Mimic duplicate form field names as arrays --->
+<cfscript>
+  _cfbackportapp = GetApplicationMetadata();
+  if (StructKeyExists(_cfbackportapp, 'sameFormFieldsAsArray') And _cfbackportapp.sameFormFieldsAsArray) {
+    //
+  }
+</cfscript>
+
 <cffunction name="ArraySlice" output="false" returntype="array" description="Returns part of an array, as specified">
   <cfargument name="array" type="array" required="true" />
   <cfargument name="offset" type="numeric" required="true" />
@@ -64,25 +72,23 @@
 <cffunction name="CallStackGet" output="false" returntype="array">
   <cfscript>
     var lc = StructNew();
-    lc.thread = CreateObject("java", "java.lang.Thread").currentThread();
-    lc.dump = lc.thread.getStackTrace();
+    lc.trace = CreateObject("java", "java.lang.Throwable").getStackTrace();
     lc.op = ArrayNew(1);
-    lc.elCount = ArrayLen(lc.dump);
-    for (lc.i = 1; lc.i lte lc.elCount; lc.i = lc.i + 1) {
-      lc.fName = lc.dump[lc.i].getFileName();
-      if (StructKeyExists(lc, 'fName') And ReFindNoCase("\.cf(c|m)$", lc.fName)) {
+    lc.elCount = ArrayLen(lc.trace);
+    for (lc.i = 1; lc.i Lte lc.elCount; lc.i = lc.i + 1) {
+      if (ListFindNoCase('runPage,runFunction', lc.trace[lc.i].getMethodName())) {
         lc.info = StructNew();
-        lc.info["Template"] = lc.fName;
-        lc.cName = lc.dump[lc.i].getClassName();
-        if (ReFindNoCase("\$func", lc.cName)) {
-          lc.info["Function"] = ReReplace(lc.cName, "^.+\$func", "");
+        lc.info["Template"] = lc.trace[lc.i].getFileName();
+        if (lc.trace[lc.i].getMethodName() Eq "runFunction") {
+          lc.info["Function"] = ReReplace(lc.trace[lc.i].getClassName(), "^.+\$func", "");
         } else {
           lc.info["Function"] = "";
         }
-        lc.info["LineNumber"] = lc.dump[lc.i].getLineNumber();
+        lc.info["LineNumber"] = lc.trace[lc.i].getLineNumber();
         ArrayAppend(lc.op, Duplicate(lc.info));
       }
     }
+    // Remove the entry for this function
     ArrayDeleteAt(lc.op, 1);
     return lc.op;
   </cfscript>
@@ -92,15 +98,15 @@
   <cfargument name="destination" required="false" type="string" default="browser" />
   <cfscript>
     var lc = StructNew();
-    lc.dump = CallStackGet();
+    lc.trace = CallStackGet();
     lc.op = ArrayNew(1);
-    lc.elCount = ArrayLen(lc.dump);
+    lc.elCount = ArrayLen(lc.trace);
     // Skip 1 (CallStackDump)
     for (lc.i = 2; lc.i lte lc.elCount; lc.i = lc.i + 1) {
-      if (Len(lc.dump[lc.i]["Function"]) Gt 0) {
-        ArrayAppend(lc.op, lc.dump[lc.i].Template & ":" & lc.dump[lc.i]["Function"] & ":" & lc.dump[lc.i].LineNumber);
+      if (Len(lc.trace[lc.i]["Function"]) Gt 0) {
+        ArrayAppend(lc.op, lc.trace[lc.i].Template & ":" & lc.trace[lc.i]["Function"] & ":" & lc.trace[lc.i].LineNumber);
       } else {
-        ArrayAppend(lc.op, lc.dump[lc.i].Template & ":" & lc.dump[lc.i].LineNumber);
+        ArrayAppend(lc.op, lc.trace[lc.i].Template & ":" & lc.trace[lc.i].LineNumber);
       }
     }
     lc.op = ArrayToList(lc.op, Chr(10));
@@ -111,10 +117,9 @@
     } else if (arguments.destination Eq "console") {
       CreateObject("java", "java.lang.System").out.println(lc.op);
     } else {
-      if (FileExists(arguments.destination)) {
-        // TODO: CF8+ code, what about CF7?
-        FileWrite(arguments.desintation, lc.op & Chr(10));
-      }
+      lc.fp = FileOpen(arguments.destination, "append");
+      FileWrite(lc.fp, lc.op & Chr(10));
+      FileClose(lc.fp);
     }
   </cfscript>
 </cffunction>
