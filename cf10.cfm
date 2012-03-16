@@ -1,7 +1,17 @@
 <cffunction name="GetApplicationMetadata" output="false" returntype="struct">
   <cfscript>
+    var lc = StructNew();
     if (IsDefined("application")) {
-      return application.getApplicationSettings();
+      lc.settings = Duplicate(application.getApplicationSettings());
+      for (lc.key in lc.settings) {
+        if (IsCustomFunction(lc.settings[lc.key])) {
+          StructDelete(lc.settings, lc.key);
+        }
+      }
+      if (StructKeyExists(lc.settings, "scriptProtect") And Len(lc.settings.scriptProtect)) {
+        lc.settings.scriptProtect = ListToArray(UCase(lc.settings.scriptProtect));
+      }
+      return lc.settings;
     }
     return StructNew();
   </cfscript>
@@ -20,8 +30,8 @@
   <cfargument name="offset" type="numeric" required="true" />
   <cfargument name="length" type="numeric" required="false" />
   <cfscript>
-  	var lc = StructNew();
-  	if (Not StructKeyExists(arguments, "length")) {
+    var lc = StructNew();
+    if (Not StructKeyExists(arguments, "length")) {
       lc.from = arguments.offset - 1;
       arguments.length = ArrayLen(arguments.array) - lc.from;
     } else if (arguments.offset Lt 0) {
@@ -31,7 +41,12 @@
     }
     lc.to = lc.from + arguments.length;
     // subList(from [inclusive], to [exclusive]), start index is 0
-    return arguments.array.subList(lc.from, lc.to);
+    lc.slice = arguments.array.subList(lc.from, lc.to);
+    // Slice is the wrong type java.util.Collections$SynchronizedRandomAccessList#
+    // Recreate as a normal CF array
+    lc.array = ArrayNew(1);
+    lc.array.addAll(lc.slice);
+    return lc.array;
   </cfscript>
 </cffunction>
 
