@@ -195,3 +195,23 @@
 	<cfargument name="string" type="string" required="true" />
 	<cfreturn ReReplace(arguments.string, "([\[\]\(\)\^\$\.\+\?\*\-\|])", "\$1", "all") />
 </cffunction>
+
+<cffunction name="EncodeForCSS" output="false" returntype="string">
+	<cfargument name="string" type="string" required="true">
+	<cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForCSS(string)>
+</cffunction>
+
+<cffunction name="EncodeForHTMLAttribute" output="false" returntype="string">
+	<cfargument name="string" type="string" required="true">
+	<cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForHTMLAttribute(string)>
+</cffunction>
+
+<cffunction name="encodeForJavaScript" output="false" returntype="string">
+	<cfargument name="string" type="string" required="true">
+	<cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForJavaScript(string)>
+</cffunction>
+
+<cffunction name="encodeForURL" output="false" returntype="string">
+	<cfargument name="string" type="string" required="true">
+	<cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForURL(string)>
+</cffunction>
