@@ -8,7 +8,7 @@
 
 Author: David "Mister Dai" Boyer
 Website: http://misterdai.wordpress.com
-Version: 0.5
+Version: 0.6
 Contributors: Henry Ho
 
 ----------------------
@@ -49,9 +49,11 @@ there to make use of them.
 		ArraySlice
 		CallStackDump
 		CallStackGet
+		Canoncicalize
 		CsrfGenerateToken
 		CsrfVerifyToken
 		EncodeForCSS			(Henry Ho)
+		EncodeForHTML
 		EncodeForHTMLAttribute	(Henry Ho)
 		EncodeForJavaScript		(Henry Ho)
 		EncodeForURL			(Henry Ho)

@@ -196,24 +196,61 @@
 	<cfreturn ReReplace(arguments.string, "([\[\]\(\)\^\$\.\+\?\*\-\|])", "\$1", "all") />
 </cffunction>
 
+<cffunction name="Canoncicalize" output="false" returntype="string">
+  <cfargument name="inputString" type="string" required="true" />
+  <cfargument name="restrictMultiple" type="boolean" required="true" />
+  <cfargument name="restrictMixed" type="boolean" required="true" />
+  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().canonicalize(arguments.string, arguments.restrictMultiple, arguments.restrictMixed) />
+</cffunction>
+
 <cffunction name="EncodeForCSS" output="false" returntype="string">
-  <cfargument name="string" type="string" required="true">
-  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForCSS(string)>
+  <cfargument name="inputString" type="string" required="true" />
+  <cfargument name="strict" type="boolean" required="false" default="false" />
+  <cfscript>
+    var lc = StructNew();
+    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    return lc.encoder.encodeForCSS(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
+  </cfscript>
+</cffunction>
+
+<cffunction name="EncodeForHTML" output="false" returntype="string">
+  <cfargument name="inputString" type="string" required="true" />
+  <cfargument name="strict" type="boolean" required="false" default="false" />
+  <cfscript>
+    var lc = StructNew();
+    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    return lc.encoder.encodeForHTML(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
+  </cfscript>
 </cffunction>
 
 <cffunction name="EncodeForHTMLAttribute" output="false" returntype="string">
-  <cfargument name="string" type="string" required="true">
-  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForHTMLAttribute(string)>
+  <cfargument name="inputString" type="string" required="true" />
+  <cfargument name="strict" type="boolean" required="false" default="false" />
+  <cfscript>
+    var lc = StructNew();
+    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    return lc.encoder.encodeForHTMLAttribute(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
+  </cfscript>
 </cffunction>
 
 <cffunction name="EncodeForJavaScript" output="false" returntype="string">
-  <cfargument name="string" type="string" required="true">
-  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForJavaScript(string)>
+  <cfargument name="inputString" type="string" required="true" />
+  <cfargument name="strict" type="boolean" required="false" default="false" />
+  <cfscript>
+    var lc = StructNew();
+    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    return lc.encoder.encodeForJavaScript(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
+  </cfscript>
 </cffunction>
 
 <cffunction name="EncodeForURL" output="false" returntype="string">
-  <cfargument name="string" type="string" required="true">
-  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForURL(string)>
+  <cfargument name="inputString" type="string" required="true" />
+  <cfargument name="strict" type="boolean" required="false" default="false" />
+  <cfscript>
+    var lc = StructNew();
+    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    return lc.encoder.encodeForURL(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
+  </cfscript>
 </cffunction>
 
 <!---
@@ -227,7 +264,9 @@
   <!--- If the Java class doesn't exist, catch the exception --->
   <cfset cfbackport.temp.getClass().forName("org.owasp.esapi.ESAPI", false, JavaCast("null", "")) />
   <cfcatch type="any">
+    <cfset StructDelete(variables, "Canoncicalize") />
     <cfset StructDelete(variables, "EncodeForCSS") />
+    <cfset StructDelete(variables, "EncodeForHTML") />
     <cfset StructDelete(variables, "EncodeForHTMLAttribute") />
     <cfset StructDelete(variables, "EncodeForJavaScript") />
     <cfset StructDelete(variables, "EncodeForURL") />
