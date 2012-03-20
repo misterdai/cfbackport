@@ -1,3 +1,6 @@
+<!--- Temporary structure to hold information while we build functions --->
+<cfset cfbackport = StructNew() />
+
 <cffunction name="GetApplicationMetadata" output="false" returntype="struct">
   <cfscript>
     var lc = StructNew();
@@ -19,8 +22,8 @@
 
 <!--- Mimic duplicate form field names as arrays --->
 <cfscript>
-  _cfbackportapp = GetApplicationMetadata();
-  if (StructKeyExists(_cfbackportapp, 'sameFormFieldsAsArray') And _cfbackportapp.sameFormFieldsAsArray) {
+  cfbackport.app = GetApplicationMetadata();
+  if (StructKeyExists(cfbackport.app, 'sameFormFieldsAsArray') And cfbackport.app.sameFormFieldsAsArray) {
     //
   }
 </cfscript>
@@ -149,21 +152,18 @@
       session['_cfbackportcsrf'] = StructNew();
     }
     if (arguments.random Or Not StructKeyExists(session._cfbackportcsrf, arguments.key)) {
-      if (ListFirst(server.coldfusion.productVersion) Gte 9) {
-        lc.token = "";
-        for (lc.i = 1; lc.i Lte 2; lc.i = lc.i + 1) {
-          lc.hex = FormatBaseN(RandRange(0, 65535, "SHA1PRNG"), 16);
-          lc.token = lc.token & RepeatString("0", 4 - Len(lc.hex)) & lc.hex;
-        }
-        lc.token = lc.token & Replace(CreateUUID(), "-", "", "all");
-      } else {
-        lc.token = "";
-        for (lc.i = 1; lc.i Lte 10; lc.i = lc.i + 1) {
-          lc.hex = FormatBaseN(RandRange(0, 65535, "SHA1PRNG"), 16);
-          lc.token = lc.token & RepeatString("0", 4 - Len(lc.hex)) & lc.hex;
-        }
+      lc.token = Now();
+      // Throw in the datetime for a little more randomisation
+      lc.times = 3;
+      // Combinations = 65536^lc.times
+      // e.g. 65536^3 = 281,474,976,710,656 possible values to pick from
+      // This should be secure enough as the value is either per
+      // generation (random=true) or only lives for the session lifetime
+      for (lc.i = 1; lc.i Lte lc.times; lc.i = lc.i + 1) {
+        lc.token = lc.token & RandRange(0, 65535, "SHA1PRNG");
       }
-      lc.token = UCase(lc.token);
+      // Hash the token, trim to 40 characters (20-bytes), upper case
+      lc.token = UCase(Left(Hash(lc.token, "SHA-256"), 40));
       session._cfbackportcsrf[arguments.key] = lc.token;
     } else {
       return session._cfbackportcsrf[arguments.key];
@@ -187,7 +187,7 @@
 </cffunction>
 
 <cffunction name="isClosure" output="false" returntype="boolean">
-	<!--- Couldn't resist --->
+	<!--- Couldn't resist, closures cannot be backported so no test possible --->
 	<cfreturn false />
 </cffunction>
 
@@ -197,21 +197,41 @@
 </cffunction>
 
 <cffunction name="EncodeForCSS" output="false" returntype="string">
-	<cfargument name="string" type="string" required="true">
-	<cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForCSS(string)>
+  <cfargument name="string" type="string" required="true">
+  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForCSS(string)>
 </cffunction>
 
 <cffunction name="EncodeForHTMLAttribute" output="false" returntype="string">
-	<cfargument name="string" type="string" required="true">
-	<cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForHTMLAttribute(string)>
+  <cfargument name="string" type="string" required="true">
+  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForHTMLAttribute(string)>
 </cffunction>
 
-<cffunction name="encodeForJavaScript" output="false" returntype="string">
-	<cfargument name="string" type="string" required="true">
-	<cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForJavaScript(string)>
+<cffunction name="EncodeForJavaScript" output="false" returntype="string">
+  <cfargument name="string" type="string" required="true">
+  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForJavaScript(string)>
 </cffunction>
 
-<cffunction name="encodeForURL" output="false" returntype="string">
-	<cfargument name="string" type="string" required="true">
-	<cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForURL(string)>
+<cffunction name="EncodeForURL" output="false" returntype="string">
+  <cfargument name="string" type="string" required="true">
+  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().encodeForURL(string)>
 </cffunction>
+
+<!---
+  ESAPI library requires CF9.0.1+ or have the library added manually.
+
+  Function tags cannot be wrapped in "if" statements to exclude creation.
+  Instead, test for the required ESAPI class and destroy if missing.
+--->
+<cfset cfbackport.temp = ArrayNew(1) />
+<cftry>
+  <!--- If the Java class doesn't exist, catch the exception --->
+  <cfset cfbackport.temp.getClass().forName("org.owasp.esapi.ESAPI", false, JavaCast("null", "")) />
+  <cfcatch type="any">
+    <cfset StructDelete(variables, "EncodeForCSS") />
+    <cfset StructDelete(variables, "EncodeForHTMLAttribute") />
+    <cfset StructDelete(variables, "EncodeForJavaScript") />
+    <cfset StructDelete(variables, "EncodeForURL") />
+  </cfcatch>
+</cftry>
+
+<cfset StructDelete(variables, "cfbackport") />

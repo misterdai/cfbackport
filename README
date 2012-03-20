@@ -9,6 +9,7 @@
 Author: David "Mister Dai" Boyer
 Website: http://misterdai.wordpress.com
 Version: 0.5
+Contributors: Henry Ho
 
 ----------------------
 | Description        |
@@ -48,6 +49,14 @@ there to make use of them.
 		ArraySlice
 		CallStackDump
 		CallStackGet
+		CsrfGenerateToken
+		CsrfVerifyToken
+		EncodeForCSS			(Henry Ho)
+		EncodeForHTMLAttribute	(Henry Ho)
+		EncodeForJavaScript		(Henry Ho)
+		EncodeForURL			(Henry Ho)
 		GetApplicationMetadata
+		IsClosure
+		ReEscape
 		SessionInvalidate
 		SessionStartTime
