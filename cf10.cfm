@@ -397,6 +397,7 @@ Based upon code from http://www.coldfusiondeveloper.com.au/go/note/2008/01/18/hm
 
   <cfcatch type="any">
     <cfset StructDelete(variables, "Canonicalize") />
+    <cfset StructDelete(variables, "DecodeFromURL") />
     <cfset StructDelete(variables, "EncodeForCSS") />
     <cfset StructDelete(variables, "EncodeForHTML") />
     <cfset StructDelete(variables, "EncodeForHTMLAttribute") />
