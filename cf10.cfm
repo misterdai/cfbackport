@@ -196,80 +196,224 @@
 	<cfreturn ReReplace(arguments.string, "([\[\]\(\)\^\$\.\+\?\*\-\|])", "\$1", "all") />
 </cffunction>
 
-<cffunction name="Canoncicalize" output="false" returntype="string">
-  <cfargument name="inputString" type="string" required="true" />
-  <cfargument name="restrictMultiple" type="boolean" required="true" />
-  <cfargument name="restrictMixed" type="boolean" required="true" />
-  <cfreturn CreateObject("java", "org.owasp.esapi.ESAPI").encoder().canonicalize(arguments.string, arguments.restrictMultiple, arguments.restrictMixed) />
+<cffunction name="Canonicalize" output="false" returntype="string" hint="Canonicalize or decode the input string, returns Decoded form of input string">
+	<cfargument name="inputString" type="string" required="true" hint="Required. String to be encode" />
+	<cfargument name="restrictMultiple" type="boolean" required="true" hint="Required. If set to true, multiple encoding is restricted" />
+	<cfargument name="restrictMixed" type="boolean" required="true" hint="Required. If set to true, mixed encoding is restricted (Ignored with ESAPI <2.0.0)" />
+  
+	<cfscript>
+		var lc = StructNew(); 
+		var canonicalizedString = "";
+
+		lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+
+		/* 
+		 * ESAPI 2.0.0+ (r1630) supports String canonicalize( String input, boolean restrictMultiple, boolean restrictMixed )
+		 * unfortunately APSB11-04+ installs ESAPI 1.4.4 for CF8.0.x and ESAPI 2.0_rc10 for CF9.0.x and CF9.0.2 which don't have it
+		 * try ESAPI 2.0.0+ call then fall back
+		 */
+ 		try {
+			canonicalizedString = lc.encoder.canonicalize(JavaCast("string", arguments.inputString), JavaCast("boolean", arguments.restrictMultiple), JavaCast("boolean", arguments.restrictMixed));
+		}
+		catch(Any excpt) {
+			canonicalizedString = lc.encoder.canonicalize(JavaCast("string", arguments.inputString), JavaCast("boolean", arguments.restrictMultiple));
+		}	
+	 
+	 	return canonicalizedString; 	
+	</cfscript>
 </cffunction>
 
-<cffunction name="EncodeForCSS" output="false" returntype="string">
-  <cfargument name="inputString" type="string" required="true" />
-  <cfargument name="strict" type="boolean" required="false" default="false" />
-  <cfscript>
-    var lc = StructNew();
-    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
-    return lc.encoder.encodeForCSS(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
-  </cfscript>
+<cffunction name="EncodeForCSS" output="false" returntype="string" hint="Encodes the input string for use in CSS, returns Encoded string">
+ 	<cfargument name="inputString" type="string" required="true" hint="Required. String to encode" />
+ 	<cfargument name="strict" type="boolean" default="false" hint="Optional. If set to true, restricts multiple and mixed encoding" />
+	 
+	<cfscript>
+    	var lc = StructNew();
+    	var encodedString = "";
+    	
+    	lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    	encodedString = lc.encoder.encodeForCSS(lc.encoder.canonicalize(JavaCast("string", arguments.inputString), JavaCast("boolean", arguments.strict)));
+    	
+    	return encodedString;
+ 	</cfscript>
 </cffunction>
 
-<cffunction name="EncodeForHTML" output="false" returntype="string">
-  <cfargument name="inputString" type="string" required="true" />
-  <cfargument name="strict" type="boolean" required="false" default="false" />
-  <cfscript>
-    var lc = StructNew();
-    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
-    return lc.encoder.encodeForHTML(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
-  </cfscript>
+<cffunction name="DecodeForHTML" output="false" returntype="string" hint="Decodes an HTML encoded string, returns Decoded HTML string">
+ 	<cfargument name="inputString" type="string" required="true" hint="Required. Encoded string to decode" />
+ 	 
+	<cfscript>
+    	var lc = StructNew();
+    	var decodedString = "";
+    	
+    	lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    	decodedString = lc.encoder.DecodeForHTML(JavaCast("string", arguments.inputString));
+    	
+    	return decodedString;
+	</cfscript>
 </cffunction>
 
-<cffunction name="EncodeForHTMLAttribute" output="false" returntype="string">
-  <cfargument name="inputString" type="string" required="true" />
-  <cfargument name="strict" type="boolean" required="false" default="false" />
-  <cfscript>
-    var lc = StructNew();
-    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
-    return lc.encoder.encodeForHTMLAttribute(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
-  </cfscript>
+<cffunction name="EncodeForHTML" output="false" returntype="string" hint="Encodes the input string for use in HTML, returns Encoded string">
+ 	<cfargument name="inputString" type="string" required="true" hint="Required. String to encode" />
+ 	<cfargument name="strict" type="boolean" default="false" hint="Optional. If set to true, restricts multiple and mixed encoding" />
+	 
+	<cfscript>
+    	var lc = StructNew();
+    	var encodedString = "";
+    	
+    	lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    	encodedString = lc.encoder.encodeForHTML(lc.encoder.canonicalize(JavaCast("string", arguments.inputString), JavaCast("boolean", arguments.strict)));
+    	
+    	return encodedString;
+	</cfscript>
 </cffunction>
 
-<cffunction name="EncodeForJavaScript" output="false" returntype="string">
-  <cfargument name="inputString" type="string" required="true" />
-  <cfargument name="strict" type="boolean" required="false" default="false" />
-  <cfscript>
-    var lc = StructNew();
-    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
-    return lc.encoder.encodeForJavaScript(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
-  </cfscript>
+<cffunction name="EncodeForHTMLAttribute" output="false" returntype="string" hint="Encodes the input string for use in HTML attribute, returns Encoded string">
+ 	<cfargument name="inputString" type="string" required="true" hint="Required. String to encode" />
+ 	<cfargument name="strict" type="boolean" default="false" hint="Optional. If set to true, restricts multiple and mixed encoding" />
+	 
+	<cfscript>
+    	var lc = StructNew();
+    	var encodedString = "";
+    	
+    	lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    	encodedString = lc.encoder.encodeForHTMLAttribute(lc.encoder.canonicalize(JavaCast("string", arguments.inputString), JavaCast("boolean", arguments.strict)));
+    	
+    	return encodedString;
+	</cfscript>
 </cffunction>
 
-<cffunction name="EncodeForURL" output="false" returntype="string">
-  <cfargument name="inputString" type="string" required="true" />
-  <cfargument name="strict" type="boolean" required="false" default="false" />
-  <cfscript>
-    var lc = StructNew();
-    lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
-    return lc.encoder.encodeForURL(lc.encoder.canoncicalize(arguments.inputString, arguments.strict));
-  </cfscript>
+<cffunction name="EncodeForJavaScript" output="false" returntype="string" hint="Encodes the input string for use in JavaScript, returns Encoded string">
+ 	<cfargument name="inputString" type="string" required="true" hint="Required. String to encode" />
+ 	<cfargument name="strict" type="boolean" default="false" hint="Optional. If set to true, restricts multiple and mixed encoding" />
+	 
+	<cfscript>
+    	var lc = StructNew();
+    	var encodedString = "";
+    	
+    	lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    	encodedString = lc.encoder.encodeForJavaScript(lc.encoder.canonicalize(JavaCast("string", arguments.inputString), JavaCast("boolean", arguments.strict)));
+    	
+    	return encodedString;
+	</cfscript>
+</cffunction>
+
+
+<cffunction name="DecodeFromURL" output="false" returntype="string" hint="">
+ 	<cfargument name="inputString" type="string" required="true" hint="Required. String to decode" />
+
+	<cfscript>
+    	var lc = StructNew();
+    	
+		local.encoding = createObject("java", "java.lang.System").getProperty("file.encoding");
+		try {
+				return createObject("java", "java.net.URLDecoder").decode(javaCast("string", canonicalize(arguments.inputString, false, false)), local.encoding);
+		}
+		// throw the same errors as CF10
+		catch(java.io.UnsupportedEncodingException ex) {
+			// Character encoding not supported
+			throw("There was an error while encoding.", "Application", "For more details check logs.");
+		}
+		catch(java.lang.Exception e) {
+			// Problem URL decoding input
+			throw("There was an error while encoding.", "Application", "For more details check logs.");
+		}
+		</cfscript>
+
+	</cffunction>
+
+
+<cffunction name="EncodeForURL" output="false" returntype="string" hint="Encodes the input string for use in URLs, returns Encoded string">
+ 	<cfargument name="inputString" type="string" required="true" hint="Required. String to encode" />
+ 	<cfargument name="strict" type="boolean" default="false" hint="Optional. If set to true, restricts multiple and mixed encoding" />
+	 
+	<cfscript>
+    	var lc = StructNew();
+    	var encodedString = "";
+    	
+    	lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    	encodedString = lc.encoder.encodeForURL(lc.encoder.canonicalize(JavaCast("string", arguments.inputString), JavaCast("boolean", arguments.strict)));
+    	
+    	return encodedString;
+	</cfscript>
+</cffunction>
+
+<cffunction name="EncodeForXML" output="false" returntype="string" hint="Encodes the input string for use in XML, returns Encoded string">
+ 	<cfargument name="inputString" type="string" required="true" hint="Required. String to encode" />
+ 	<cfargument name="strict" type="boolean" default="false" hint="Optional. If set to true, restricts multiple and mixed encoding" />
+	 
+	<cfscript>
+    	var lc = StructNew();
+    	var encodedString = "";
+    	
+    	lc.encoder = CreateObject("java", "org.owasp.esapi.ESAPI").encoder();
+    	encodedString = lc.encoder.encodeForXML(lc.encoder.canonicalize(JavaCast("string", arguments.inputString), JavaCast("boolean", arguments.strict)));
+    	
+    	return encodedString;
+	</cfscript>
 </cffunction>
 
 <!---
-  ESAPI library requires CF9.0.1+ or have the library added manually.
+Based upon code from http://www.coldfusiondeveloper.com.au/go/note/2008/01/18/hmac-sha1-using-java/
+ --->
+<cffunction name="HMac" output="false" returntype="string" description="Creates Hash-based Message Authentication Code for the given string or byte array based on the algorithm and encoding">
+	<cfargument name="message" type="any" required="true" hint="can be string or byte array" />
+	<cfargument name="key" type="any" required="true" hint="can be string or byte array" />
+	<cfargument name="algorithm" type="string" default="HMACMD5" hint="HMACMD5, HMACSHA1, HMACSHA256, HMACSHA384, HMACSHA512, HMACRIPEMD160, HMACSHA224" />
+	<cfargument name="encoding" type="string" default="#createObject('java', 'java.lang.System').getProperty('file.encoding')#" hint="encoding to use" />
 
-  Function tags cannot be wrapped in "if" statements to exclude creation.
-  Instead, test for the required ESAPI class and destroy if missing.
+	<cfset var byteArray = {} />
+	<cfset var javaObject = {} />
+	
+	<cfif NOT IsBinary(arguments.message)>
+		<cfset byteArray.Message = CharsetDecode(arguments.message, arguments.encoding) />
+	<cfelse>
+		<cfset byteArray.Message = arguments.message />
+	</cfif>
+
+	<cfif NOT IsBinary(arguments.key)>
+		<cfset byteArray.Key = CharsetDecode(arguments.key, arguments.encoding) />
+	<cfelse>
+		<cfset byteArray.Key = arguments.key />
+	</cfif>
+
+	<cfset javaObject.Key = createObject("java","javax.crypto.spec.SecretKeySpec").init(byteArray.Key, arguments.algorithm) />
+ 	<cfset javaObject.Mac = createObject("java","javax.crypto.Mac") />
+  
+  	<cfset javaObject.Mac = javaObject.Mac.getInstance(arguments.algorithm) />
+  	<cfset javaObject.Mac.init(javaObject.Key) />
+
+  	<cfreturn BinaryEncode(javaObject.Mac.doFinal(byteArray.Message), "hex") />
+</cffunction>
+
+<!---
+	Hopefully, ColdFusion is patched and therefore ESAPI is available
+	APSB11-04+ installs ESAPI 1.4.4 for CF8.0.x and ESAPI 2.0_rc10 for CF9.0.x and CF9.0.2
+
+	Test for ESAPI existance by calling canonicalize, if exception is thrown
+	remove the functions that are dependent upon it
 --->
-<cfset cfbackport.temp = ArrayNew(1) />
 <cftry>
-  <!--- If the Java class doesn't exist, catch the exception --->
-  <cfset cfbackport.temp.getClass().forName("org.owasp.esapi.ESAPI", false, JavaCast("null", "")) />
+  <cfset canonicalize("", false, false) />
+
   <cfcatch type="any">
-    <cfset StructDelete(variables, "Canoncicalize") />
+    <cfset StructDelete(variables, "Canonicalize") />
     <cfset StructDelete(variables, "EncodeForCSS") />
     <cfset StructDelete(variables, "EncodeForHTML") />
     <cfset StructDelete(variables, "EncodeForHTMLAttribute") />
     <cfset StructDelete(variables, "EncodeForJavaScript") />
     <cfset StructDelete(variables, "EncodeForURL") />
+    <cfset StructDelete(variables, "EncodeForXML") />
+  </cfcatch>
+</cftry>
+
+<!---
+	ESAPI 1.4.4 does not have DecodeForHTML
+ --->
+<cftry>
+  <cfset decodeForHTML("") />
+
+  <cfcatch type="any">
+    <cfset StructDelete(variables, "DecodeForHTML") />
   </cfcatch>
 </cftry>
 
