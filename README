@@ -67,14 +67,14 @@ there to make use of them.
 		EncodeForURL			(Henry Ho)
 		EncodeForXML			(David Epler)
 		GetApplicationMetadata
-		HMac					(David Epler)
+		HMac				(David Epler)
 		IsClosure
 		ReEscape
 		SessionInvalidate
 		SessionStartTime
 		
 	* Backported from CF9 for CF8
-		throw					(David Epler) [required for DecodeFromURL]
+		throw				(David Epler) [required for DecodeFromURL]
 
 ----------------------
 | Unit Tests         |
