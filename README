@@ -8,7 +8,7 @@
 
 Author: David "Mister Dai" Boyer
 Website: http://misterdai.wordpress.com
-Version: 0.7
+Version: 0.8
 Contributors: Henry Ho, David Epler
 
 ----------------------
@@ -69,6 +69,7 @@ there to make use of them.
 		GetApplicationMetadata
 		HMac				(David Epler)
 		IsClosure
+		QueryExecute                    (Henry Ho)
 		ReEscape
 		SessionInvalidate
 		SessionStartTime
