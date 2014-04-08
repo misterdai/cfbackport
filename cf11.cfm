@@ -3,7 +3,7 @@
 	<cfargument name="queryParams"  default="#structNew()#">
 	<cfargument name="queryOptions" default="#structNew()#">
 
-	<cfset arguments.parameters = []>
+	<cfset var parameters = []>
 	
 	<cfif isArray(queryParams)>
 		<cfloop array="#queryParams#" index="local.param">
