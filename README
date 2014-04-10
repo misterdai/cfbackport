@@ -16,7 +16,7 @@ Contributors: Henry Ho, David Epler
 ----------------------
 
 This project aims to make at least some functions from newer versions of Adobe
-ColdFusion avilable in older versions.  For example, SessionInvalidate() is new
+ColdFusion available in older versions.  For example, SessionInvalidate() is new
 to CF10 but undocumented features make it possible in at least CF8+, possibly
 even CF7.
 
@@ -76,6 +76,9 @@ there to make use of them.
 		
 	* Backported from CF9 for CF8
 		throw				(David Epler) [required for DecodeFromURL]
+		location
+		writeDump
+		ArrayContains
 
 ----------------------
 | Unit Tests         |
