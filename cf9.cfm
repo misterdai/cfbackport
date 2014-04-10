@@ -1,6 +1,3 @@
-<!---
-Based upon http://cflib.org/udf/Throw, modified to match CF9 throw() argument order
---->
 <cffunction name="arrayContains" returnType="boolean" output="false" access="public" hint="uses the underlying java.util.vector's contains method ">
 	<cfargument name="array" type="array" required="true" />
 	<cfargument name="object" type="any" required="true"/>
@@ -14,6 +11,9 @@ Based upon http://cflib.org/udf/Throw, modified to match CF9 throw() argument or
 		<cflocation attributeCollection="#ARGUMENTS#"/>
 </cffunction>
 
+<!---
+Based upon http://cflib.org/udf/Throw, modified to match CF9 throw() argument order
+--->
 <cffunction name="throw" returnType="void" output="false" hint="CFML Throw wrapper">
 	<cfargument name="message" type="string" default="" hint="Message for Exception">
 	<cfargument name="type" type="string" default="Application" hint="Type for Exception">
