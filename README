@@ -79,6 +79,8 @@ there to make use of them.
 		location
 		writeDump
 		ArrayContains
+		DirectoryList
+		DirectoryRename
 
 ----------------------
 | Unit Tests         |
