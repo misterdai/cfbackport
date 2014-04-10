@@ -48,6 +48,18 @@
 	
 </cffunction>
 
+<cffunction name="DirectoryRename" returnType="void" output="true" access="public">
+	<cfargument name="currentName" type="string" required="true"/>
+	<cfargument name="newName" type="string" required="true"/>
+	
+	<cfscript>
+		if( lcase(ARGUMENTS.currentName).startsWith("ram:///") ){
+			throw('CF 8 does not support Memory-based virtual file system');
+		}
+	</cfscript>
+	<cfdirectory action="rename" directory="#ARGUMENTS.currentName#" newDirectory="#ARGUMENTS.newName#"/>	
+</cffunction>
+
 <cffunction name="location" returnType="void" output="false" access="public">
 	<cfargument name="url" type="string" required="true" />
 	<cfargument name="addToken" type="boolean" required="false" default="true"/>
