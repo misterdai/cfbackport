@@ -4,6 +4,50 @@
 	<cfreturn ARGUMENTS.array.contains(ARGUMENTS.object)/>
 </cffunction>
 
+<cffunction name="DirectoryList" returnType="any" output="true" access="public">
+	<cfargument name="path" type="string" required="true"/>
+	<cfargument name="recurse" type="boolean" required="false" default="false"/>
+	<cfargument name="listInfo" type="string" required="false" default="query"/>
+	<cfargument name="filter" type="string" required="false"/>
+	<cfargument name="sort" type="string" required="false" default="ASC"/>
+	
+	<cfscript>
+		var retVar = '';
+		var attStr = structNew();
+			attStr['action'] 	= 'list';
+			attStr['name'] 		= 'retVar';
+			attStr['directory'] = ARGUMENTS.path;
+			attStr['recurse'] 	= ARGUMENTS.recurse;
+			attStr['listInfo'] 	= ARGUMENTS.listInfo;
+			if(StructKeyExists(ARGUMENTS, 'filter')){
+				attStr['filter'] 	= ARGUMENTS.filter;
+			}
+			attStr['sort'] 	= ARGUMENTS.sort;
+	</cfscript>
+	
+	<cfdirectory attributeCollection="#attStr#" />
+	
+	<cfscript>
+		switch(lcase(ARGUMENTS.listInfo)){
+			case 'name':
+				return ListToArray( 
+						ValueList( retVar.name, '|^^|')
+						, '|^^|'
+					);
+			break;
+			case 'path':
+				return ListToArray( 
+						ValueList( retVar.directory, '|^^|')
+						, '|^^|'
+					);
+			break;
+			default:
+				return retVar;
+		}
+	</cfscript>
+	
+</cffunction>
+
 <cffunction name="location" returnType="void" output="false" access="public">
 	<cfargument name="url" type="string" required="true" />
 	<cfargument name="addToken" type="boolean" required="false" default="true"/>
