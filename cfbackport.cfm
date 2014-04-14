@@ -10,7 +10,7 @@
 	<cfif cfbackport.major lt 10>
 		<cfinclude template="cf10.cfm" />
 	</cfif>
-	<cfif cfbackport.major lt 11>
+	<cfif cfbackport.major lt 11 AND cfbackport.major gte 9>
 		<cfinclude template="cf11.cfm" />
 	</cfif>
 </cfsilent>

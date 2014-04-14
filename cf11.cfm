@@ -1,8 +1,11 @@
-﻿<cffunction name="QueryExecute" output="false" returntype="query">
+﻿<!--- CF11 functions for CF9+ --->
+
+<cffunction name="QueryExecute" output="false" returntype="query"
+			hint="https://wikidocs.adobe.com/wiki/display/coldfusionen/QueryExecute">
 	<cfargument name="sql_statement" required="true">
 	<cfargument name="queryParams"  default="#structNew()#">
 	<cfargument name="queryOptions" default="#structNew()#">
-
+	
 	<cfset var parameters = []>
 	
 	<cfif isArray(queryParams)>
@@ -26,4 +29,19 @@
 	</cfif>
 	
 	<cfreturn new Query(sql=sql_statement, parameters=parameters, argumentCollection=queryOptions).execute().getResult()>
+</cffunction>
+
+
+<cffunction name="QueryGetRow" output="false" returntype="struct"
+			hint="https://wikidocs.adobe.com/wiki/display/coldfusionen/QueryGetRow">
+	<cfargument name="query" type="query" required="true">
+	<cfargument name="row" type="numeric" default="1">
+	
+	<cfset var struct = {}>
+	
+	<cfloop list="#query.columnList#" index="local.col">
+		<cfset struct[col] = query[col][row]>
+	</cfloop>
+	
+	<cfreturn struct>
 </cffunction>
