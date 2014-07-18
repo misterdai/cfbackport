@@ -1,16 +1,16 @@
 <cfsilent>
 	<cfscript>
-		cfbackport = StructNew();
-		cfbackport.major = ListFirst(server.coldfusion.productVersion);
-		cfbackport.minor = ListFirst(Replace(ListDeleteAt(server.coldfusion.productVersion, 1), ",", "."));
+		local.product = StructNew();
+		local.product.major = ListFirst(server.coldfusion.productVersion);
+		local.product.minor = ListFirst(Replace(ListDeleteAt(server.coldfusion.productVersion, 1), ",", "."));
 	</cfscript>
-	<cfif cfbackport.major lt 9>
+	<cfif local.product.major lt 9>
 		<cfinclude template="cf9.cfm" />
 	</cfif>
-	<cfif cfbackport.major lt 10>
+	<cfif local.product.major lt 10>
 		<cfinclude template="cf10.cfm" />
 	</cfif>
-	<cfif cfbackport.major lt 11 AND cfbackport.major gte 9>
+	<cfif local.product.major lt 11 AND local.product.major gte 9>
 		<cfinclude template="cf11.cfm" />
 	</cfif>
 </cfsilent>
