@@ -23,7 +23,9 @@
 			<cfif isSimpleValue(queryParams[key])>
 				<cfset arrayAppend(parameters, {name=local.key, value=queryParams[key]})>
 			<cfelse>
-				<cfset arrayAppend(parameters, queryParams[key])>
+				<cfset var parameter = {name=key}>
+				<cfset structAppend(parameter, queryParams[key])>
+				<cfset arrayAppend(parameters, parameter)>
 			</cfif>
 		</cfloop>
 	<cfelse>
